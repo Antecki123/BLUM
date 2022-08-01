@@ -11,5 +11,4 @@ public class ScoreDisplayUI : MonoBehaviour
     private void OnDisable() => PlayerEntity.OnScore -= UpdateScore;
 
     public void UpdateScore() => scoreText.text = scoreValue.value.ToString();
-
 }

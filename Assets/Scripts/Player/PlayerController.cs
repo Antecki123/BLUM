@@ -1,84 +1,69 @@
 using System.Collections;
 using UnityEngine;
+using Cinemachine;
+using System.Collections.Generic;
 
-[SelectionBase]
 public class PlayerController : MonoBehaviour
 {
-    [Header("Component References")]
-    [SerializeField] private PlayerEntity playerStats;
-    [SerializeField] private Rigidbody2D rb2D;
-    [SerializeField] private Animator animator;
-    [Space]
-    [SerializeField] private Transform groundCollider;
-    [SerializeField] private Transform attackPoint;
+    private InputControls inputControls;
+    private PlayerEntity player;
+    private Rigidbody2D rb;
+    private PlayerAttack attack;
 
-    [Header("Controller Properties")]
-    [SerializeField, Range(0, 50)] private float runSpeed = 15f;
-    [SerializeField, Range(0, 50)] private float jumpSpeed = 30f;
-    [Space]
-    [SerializeField, Range(0, 5)] private float attackDelay = 1.1f;
+    private float horizontalMovement;
+    private bool facingRight = true;
     private float attackTimer = 0.0f;
 
-    [Header("Animations Hashes")]
-    private static readonly int SpeedAnimation = Animator.StringToHash("Speed");
-    private static readonly int VerticalVelocityAnimation = Animator.StringToHash("Vertical_velocity");
-    private static readonly int AttackAnimation = Animator.StringToHash("Attack");
+    [SerializeField] private List<CinemachineVirtualCamera> virtualCameras;
 
-
-    private bool isJump;
-    private float horizontalMove;
-    private bool facingRight = true;
-
-    private readonly Vector2 groundSensorSize = new Vector2(0.5f, 0.1f);
-    private readonly Vector2 attackPointSize = new Vector2(1.0f, 0.5f);
-
-    private InputControls inputActions;
-    private void OnEnable() => inputActions.Enable();
-    private void OnDisable() => inputActions.Disable();
-
-    private void Awake()
+    private void Start()
     {
-        inputActions = new InputControls();
+        player = GetComponent<PlayerEntity>();
+        rb = GetComponent<Rigidbody2D>();
 
-        inputActions.Gameplay.HorizontalMovement.performed += ctx => horizontalMove = ctx.ReadValue<float>();
-        inputActions.Gameplay.HorizontalMovement.canceled += ctx => horizontalMove = 0;
+        attack = new PlayerAttack(player);
+        attackTimer = player.PlayerSettings.AttackDelay;
+    }
 
-        inputActions.Gameplay.Jump.performed += ctx => isJump = true;
-        inputActions.Gameplay.Jump.canceled += ctx => isJump = false;
+    private void OnEnable()
+    {
+        inputControls = new InputControls();
+        inputControls.Enable();
 
-        inputActions.Gameplay.Attack.performed += ctx => Attack();
+        inputControls.Gameplay.HorizontalMovement.performed += ctx => horizontalMovement = ctx.ReadValue<float>();
+        inputControls.Gameplay.HorizontalMovement.canceled += ctx => horizontalMovement = 0;
+
+        inputControls.Gameplay.Jump.started += ctx => Jump();
+        inputControls.Gameplay.Attack.started += ctx => Attack();
+
+        inputControls.Gameplay.Crouch.performed += ctx => Crouch(true);
+        inputControls.Gameplay.Crouch.canceled += ctx => Crouch(false);
     }
 
     private void FixedUpdate()
     {
-        Jump();
-        Move(horizontalMove);
+        Move();
     }
 
-    private void LateUpdate()
-    {
-        animator.SetFloat(VerticalVelocityAnimation, Mathf.Abs(rb2D.velocity.y));
-        animator.SetFloat(SpeedAnimation, Mathf.Abs(horizontalMove));
-    }
-
-    private void Jump()
-    {
-        if (IsGrounded() && isJump)
-            rb2D.velocity = Vector2.up * jumpSpeed;
-    }
-
-    private void Move(float move)
+    private void Move()
     {
         // Move the character by finding the target velocity
-        if (!playerStats.IsDead)
-            rb2D.velocity = new Vector2(runSpeed * move, rb2D.velocity.y);
-        else
-            rb2D.velocity = Vector2.zero;
+        if (!player.IsDead)
+        {
+            rb.velocity = new Vector2(player.PlayerSettings.RunSpeed * horizontalMovement, rb.velocity.y);
 
-        if (horizontalMove > 0 && !facingRight)
-            Flip();
-        else if (horizontalMove < 0 && facingRight)
-            Flip();
+            if (horizontalMovement > 0 && !facingRight)
+                Flip();
+            else if (horizontalMovement < 0 && facingRight)
+                Flip();
+        }
+        else
+        {
+            inputControls.Disable();
+            rb.constraints = RigidbodyConstraints2D.FreezeAll;
+        }
+
+        player.Animations.Movement(horizontalMovement, rb.velocity.y, IsGrounded(), IsPushing());
     }
 
     private void Flip()
@@ -88,32 +73,65 @@ public class PlayerController : MonoBehaviour
         transform.Rotate(0f, 180f, 0f);
     }
 
+    private void Jump()
+    {
+        if (IsGrounded() && !player.IsDead)
+        {
+            rb.velocity = Vector2.up * player.PlayerSettings.JumpSpeed;
+        }
+    }
+
+    private void Crouch(bool state)
+    {
+        if (state)
+        {
+            virtualCameras[0].m_Priority = 0;
+            virtualCameras[1].m_Priority = 10;
+        }
+        else
+        {
+            virtualCameras[0].m_Priority = 10;
+            virtualCameras[1].m_Priority = 0;
+        }
+    }
+
     private void Attack()
     {
-        if (attackDelay <= attackTimer)
+        if (player.PlayerSettings.AttackDelay <= attackTimer)
         {
-            attackTimer = 0.0f;
+            StopAllCoroutines();
+            StartCoroutine(AttackCountdown());
 
-            animator.SetTrigger(AttackAnimation);
-            var hitColliders = Physics2D.OverlapCapsule(attackPoint.position, attackPointSize, CapsuleDirection2D.Horizontal, 0f);
+            player.Animations.Attack();
+            attack.Attack();
         }
-
-        StartCoroutine(AttackCountdown());
     }
 
     private IEnumerator AttackCountdown()
     {
-        while (attackTimer <= attackDelay)
+        attackTimer = 0.0f;
+
+        while (player.PlayerSettings.AttackDelay > attackTimer)
         {
             attackTimer += Time.deltaTime;
             yield return null;
         }
     }
 
+    private bool IsPushing()
+    {
+        // Checks if the character is pushing object
+        RaycastHit2D raycastHit = Physics2D.BoxCast(player.PlayerSettings.AttackPoint.position,
+            player.PlayerSettings.GroundSensorSize, 0.0f, Vector2.zero, 1.0f, 1024);
+
+        return raycastHit;
+    }
+
     private bool IsGrounded()
     {
         // Checks if the character is on the ground
-        RaycastHit2D raycastHit = Physics2D.BoxCast(groundCollider.position, groundSensorSize, 0.0f, Vector2.zero);
+        RaycastHit2D raycastHit = Physics2D.BoxCast(player.PlayerSettings.GroundCollider.position,
+            player.PlayerSettings.GroundSensorSize, 0.0f, Vector2.zero);
 
         return raycastHit;
     }

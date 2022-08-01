@@ -15,7 +15,7 @@ TagManager:
   - 
   - 
   - 
-  - 
+  - Ground
   - 
   - 
   - 
@@ -38,8 +38,17 @@ TagManager:
   - 
   - 
   m_SortingLayers:
+  - name: Environment
+    uniqueID: 18981091
+    locked: 0
+  - name: Background
+    uniqueID: 3826734973
+    locked: 0
   - name: Default
     uniqueID: 0
+    locked: 0
+  - name: Foreground
+    uniqueID: 411801021
     locked: 0
   - name: Gameplay
     uniqueID: 1165630209

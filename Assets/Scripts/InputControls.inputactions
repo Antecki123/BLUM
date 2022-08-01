@@ -20,13 +20,22 @@
                     "id": "c17a562c-34ee-46ef-b953-ed30ddd692a5",
                     "expectedControlType": "Button",
                     "processors": "",
-                    "interactions": "",
+                    "interactions": "Press",
                     "initialStateCheck": false
                 },
                 {
                     "name": "Attack",
                     "type": "Button",
                     "id": "f118dc86-fe80-427c-9509-9dcefe242a85",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "Crouch",
+                    "type": "Button",
+                    "id": "3da81418-6cdd-40bf-8f32-277a33c7ab51",
                     "expectedControlType": "Button",
                     "processors": "",
                     "interactions": "",
@@ -81,7 +90,7 @@
                 {
                     "name": "",
                     "id": "7a49f8c2-45ca-473e-ac8c-83e4d93c8329",
-                    "path": "<Keyboard>/w",
+                    "path": "<Keyboard>/space",
                     "interactions": "",
                     "processors": "",
                     "groups": "Keyboard",
@@ -92,7 +101,7 @@
                 {
                     "name": "",
                     "id": "8c349eae-a8fa-4ab3-b6b1-aa9ab3d3402e",
-                    "path": "<XInputController>/buttonSouth",
+                    "path": "<Gamepad>/buttonSouth",
                     "interactions": "",
                     "processors": "",
                     "groups": "Gamepad",
@@ -103,7 +112,7 @@
                 {
                     "name": "",
                     "id": "5f158dd2-84da-4923-9de1-fd5c33a8318b",
-                    "path": "<Keyboard>/space",
+                    "path": "<Keyboard>/leftCtrl",
                     "interactions": "",
                     "processors": "",
                     "groups": "Keyboard",
@@ -119,6 +128,28 @@
                     "processors": "",
                     "groups": "Gamepad",
                     "action": "Attack",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "40e978b4-102c-41eb-b463-cba7e53fa138",
+                    "path": "<Keyboard>/s",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "Keyboard",
+                    "action": "Crouch",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "e5a501ce-e91b-413e-a3cb-b069db7ee4d5",
+                    "path": "<Gamepad>/leftStick/down",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "Gamepad",
+                    "action": "Crouch",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }
